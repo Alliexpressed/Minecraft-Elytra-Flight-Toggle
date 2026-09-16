@@ -49,12 +49,27 @@ repositories {
         name = "Curios"
         url = uri("https://maven.theillusivec4.top/")
     }
+    maven {
+        name = "Sponge"
+        url = uri("https://repo.spongepowered.org/repository/maven-public/")
+    }
 }
 
 dependencies {
     // Optional soft-dependency: only used for compiling against Curios' API. It is never
     // bundled and is not required at runtime - see ElytraToggleUtil for the loaded-mod guard.
     compileOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}:api"
+
+    // Mixin: only the annotations/AP are needed at compile time - NeoForge itself provides
+    // Mixin at runtime, so this is compileOnly/annotationProcessor, never bundled.
+    compileOnly "org.spongepowered:mixin:${mixin_version}"
+    annotationProcessor "org.spongepowered:mixin:${mixin_version}:processor"
+
+    // Elytra Slot: compileOnly, just so the optional compatibility mixin (see
+    // com.example.elytratoggle.mixin) can compile against its real class. Not bundled, not
+    // required at runtime - the mixin plugin skips applying it entirely if Elytra Slot isn't
+    // installed. Drop the matching jar in libs/ to build against a different version.
+    compileOnly files('libs/elytraslot-neoforge-9_0_2_1_21_1.jar')
 }
 
 // Expand gradle.properties values into neoforge.mods.toml

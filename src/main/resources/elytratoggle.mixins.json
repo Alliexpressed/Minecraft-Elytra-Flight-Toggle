@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "package": "com.example.elytratoggle.mixin",
+  "compatibilityLevel": "JAVA_16",
+  "refmap": "elytratoggle.refmap.json",
+  "plugin": "com.example.elytratoggle.mixin.ElytraToggleMixinPlugin",
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "mixins": [
+    "NeoForgeElytraPlatformMixin"
+  ]
+}
