@@ -1,16 +1,13 @@
 package com.example.elytratoggle.client;
 
 import com.example.elytratoggle.ElytraToggle;
+import com.example.elytratoggle.ElytraToggleUtil;
 import com.example.elytratoggle.network.ToggleElytraFlightPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.item.ElytraItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -83,7 +80,6 @@ public final class ClientElytraToggleHandler {
             return false;
         }
 
-        ItemStack chest = player.getItemBySlot(EquipmentSlot.CHEST);
-        return chest.is(Items.ELYTRA) && ElytraItem.isFlyEnabled(chest);
+        return ElytraToggleUtil.isWearingUsableElytra(player);
     }
 }

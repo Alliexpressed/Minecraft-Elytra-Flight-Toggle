@@ -2,6 +2,7 @@ package com.example.elytratoggle.network;
 
 import com.example.elytratoggle.ElytraToggle;
 import com.example.elytratoggle.ElytraToggleAttachments;
+import com.example.elytratoggle.ElytraToggleUtil;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -49,7 +50,7 @@ public final class ElytraToggleNetwork {
                 }
                 player.displayClientMessage(Component.translatable("message.elytratoggle.on"), true);
             } else {
-                if (player.isFallFlying()) {
+                if (player.isFallFlying() && ElytraToggleUtil.isWearingUsableElytra(player)) {
                     player.stopFallFlying();
                 }
                 player.displayClientMessage(Component.translatable("message.elytratoggle.off"), true);

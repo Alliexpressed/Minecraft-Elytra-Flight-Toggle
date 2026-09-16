@@ -45,6 +45,16 @@ neoForge {
 
 repositories {
     mavenLocal()
+    maven {
+        name = "Curios"
+        url = uri("https://maven.theillusivec4.top/")
+    }
+}
+
+dependencies {
+    // Optional soft-dependency: only used for compiling against Curios' API. It is never
+    // bundled and is not required at runtime - see ElytraToggleUtil for the loaded-mod guard.
+    compileOnly "top.theillusivec4.curios:curios-neoforge:${curios_version}:api"
 }
 
 // Expand gradle.properties values into neoforge.mods.toml
