@@ -1,8 +1,0 @@
-{
-  "key.categories.elytratoggle": "Elytra Toggle",
-  "key.elytratoggle.toggle_elytra_flight": "Toggle Elytra Flight",
-  "message.elytratoggle.on": "\u00a7aElytra flight: ON",
-  "message.elytratoggle.off": "\u00a7cElytra flight: OFF",
-  "message.elytratoggle.cannot_start": "Can't start elytra flight right now",
-  "message.elytratoggle.no_server_mod": "Elytra Toggle isn't installed on this server, so flight can't be locked off"
-}
