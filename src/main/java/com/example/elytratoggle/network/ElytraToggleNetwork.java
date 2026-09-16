@@ -50,7 +50,7 @@ public final class ElytraToggleNetwork {
                 }
                 player.displayClientMessage(Component.translatable("message.elytratoggle.on"), true);
             } else {
-                if (player.isFallFlying() && ElytraToggleUtil.isWearingUsableElytra(player)) {
+                if (player.isFallFlying() && ElytraToggleUtil.shouldEnforceElytraLock(player)) {
                     player.stopFallFlying();
                 }
                 player.displayClientMessage(Component.translatable("message.elytratoggle.off"), true);

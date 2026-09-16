@@ -9,8 +9,8 @@ import net.neoforged.fml.ModList;
 
 /**
  * Shared checks so the "elytra flight disabled" lock only ever touches actual elytra flight -
- * not other mods' movement abilities (a Curios trinket that grants its own flight/swimming,
- * for example) that happen to reuse the same underlying "fall flying" flag.
+ * not other mods' movement abilities (e.g. the Artifacts mod's Helium Innertube) that happen
+ * to reuse the same underlying "fall flying" flag.
  */
 public final class ElytraToggleUtil {
 
@@ -22,6 +22,23 @@ public final class ElytraToggleUtil {
     private static final boolean CURIOS_LOADED = ModList.get().isLoaded("curios");
 
     private ElytraToggleUtil() {
+    }
+
+    /**
+     * Whether the elytra-off lock should act right now: only when the player actually has a
+     * usable elytra equipped, AND nothing from the Artifacts mod is also equipped.
+     *
+     * Minecraft's fall-flying flag doesn't record which item turned it on, and the Helium
+     * Innertube starts flight with the exact same double-jump gesture as an elytra - so once
+     * both are equipped there's no reliable way to tell them apart. Rather than risk cutting
+     * off the innertube, the lock simply steps aside entirely whenever anything from
+     * Artifacts is equipped, even if an elytra is present too.
+     */
+    public static boolean shouldEnforceElytraLock(Player player) {
+        if (!isWearingUsableElytra(player)) {
+            return false;
+        }
+        return !(CURIOS_LOADED && CuriosElytraCompat.hasArtifactsItemEquipped(player));
     }
 
     /**

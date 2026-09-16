@@ -37,7 +37,7 @@ public final class ServerElytraLockHandler {
 
         if (player.isFallFlying()
                 && !player.getData(ElytraToggleAttachments.ELYTRA_FLIGHT_ENABLED)
-                && ElytraToggleUtil.isWearingUsableElytra(player)) {
+                && ElytraToggleUtil.shouldEnforceElytraLock(player)) {
             player.stopFallFlying();
         }
     }
