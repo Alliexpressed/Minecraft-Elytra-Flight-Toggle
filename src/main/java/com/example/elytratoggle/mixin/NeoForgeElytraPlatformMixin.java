@@ -25,7 +25,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(NeoForgeElytraPlatform.class)
 public abstract class NeoForgeElytraPlatformMixin {
 
-    @Inject(method = "getEquipped", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getEquipped", at = @At("HEAD"), cancellable = true, remap = false)
     private void elytratoggle$hideDisabledElytra(LivingEntity livingEntity,
             CallbackInfoReturnable<ItemStack> cir) {
         if (livingEntity.level().isClientSide()) {
