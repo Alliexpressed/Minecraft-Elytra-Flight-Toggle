@@ -1,7 +1,7 @@
 package com.example.elytratoggle.client;
 
 import com.example.elytratoggle.ElytraToggle;
-import com.example.elytratoggle.network.StopElytraFlightPayload;
+import com.example.elytratoggle.network.ToggleElytraFlightPayload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
@@ -40,43 +40,39 @@ public final class ClientElytraToggleHandler {
             return;
         }
 
-        if (player.isFallFlying()) {
-            stopFlying(player);
-        } else {
-            startFlying(mc, player);
+        // The server owns the real on/off state (and enforces it every tick), so we just ask
+        // it to flip - the "Elytra flight: ON/OFF" message comes back from the server too.
+        try {
+            PacketDistributor.sendToServer(new ToggleElytraFlightPayload());
+        } catch (Exception e) {
+            handleWithoutServerSupport(mc, player);
         }
     }
 
-    private static void startFlying(Minecraft mc, LocalPlayer player) {
+    /**
+     * Fallback for servers that don't have the mod installed. There's no vanilla packet to
+     * stop gliding or to lock out double-jump, so this can only ever start flight the normal
+     * way; it can't enforce "off" at all here.
+     */
+    private static void handleWithoutServerSupport(Minecraft mc, LocalPlayer player) {
+        if (player.isFallFlying()) {
+            player.displayClientMessage(
+                    Component.translatable("message.elytratoggle.no_server_mod"), true);
+            return;
+        }
+
         if (!canStartFlying(player)) {
             player.displayClientMessage(
                     Component.translatable("message.elytratoggle.cannot_start"), true);
             return;
         }
 
-        // This is the exact packet vanilla sends when you double-tap jump mid-air,
-        // so starting works even on servers that don't have this mod installed.
         if (mc.getConnection() != null) {
             mc.getConnection().send(new ServerboundPlayerCommandPacket(
                     player, ServerboundPlayerCommandPacket.Action.START_FALL_FLYING));
         }
     }
 
-    private static void stopFlying(LocalPlayer player) {
-        try {
-            PacketDistributor.sendToServer(new StopElytraFlightPayload());
-        } catch (Exception e) {
-            // Server doesn't have the mod, so there's no way to ask it to stop.
-            player.displayClientMessage(
-                    Component.translatable("message.elytratoggle.no_server_mod"), true);
-        }
-    }
-
-    /**
-     * Mirrors the conditions vanilla checks in LivingEntity#tryToStartFallFlying and
-     * LocalPlayer#aiStep, so we don't spam the server with requests it will reject.
-     * The server re-checks all of this anyway.
-     */
     private static boolean canStartFlying(LocalPlayer player) {
         if (player.onGround()
                 || player.isFallFlying()

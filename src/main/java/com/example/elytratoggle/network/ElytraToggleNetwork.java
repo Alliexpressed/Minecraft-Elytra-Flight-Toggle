@@ -1,6 +1,9 @@
 package com.example.elytratoggle.network;
 
 import com.example.elytratoggle.ElytraToggle;
+import com.example.elytratoggle.ElytraToggleAttachments;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -16,22 +19,40 @@ public final class ElytraToggleNetwork {
 
     @SubscribeEvent
     public static void onRegisterPayloadHandlers(RegisterPayloadHandlersEvent event) {
-        // .optional() means a client with this mod can still join a server without it.
+        // .optional() means a client with this mod can still join a server without it -
+        // it just falls back to client-only behavior (see ClientElytraToggleHandler).
         PayloadRegistrar registrar = event.registrar("1").optional();
 
         registrar.playToServer(
-                StopElytraFlightPayload.TYPE,
-                StopElytraFlightPayload.STREAM_CODEC,
-                ElytraToggleNetwork::handleStopElytraFlight
+                ToggleElytraFlightPayload.TYPE,
+                ToggleElytraFlightPayload.STREAM_CODEC,
+                ElytraToggleNetwork::handleToggleElytraFlight
         );
     }
 
-    private static void handleStopElytraFlight(StopElytraFlightPayload payload, IPayloadContext context) {
+    private static void handleToggleElytraFlight(ToggleElytraFlightPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> {
-            Player player = context.player();
-            if (player.isFallFlying()) {
-                // Clears the shared entity flag; it syncs back to every client automatically.
-                player.stopFallFlying();
+            Player playerGeneric = context.player();
+            if (!(playerGeneric instanceof ServerPlayer player)) {
+                return;
+            }
+
+            boolean newEnabled = !player.getData(ElytraToggleAttachments.ELYTRA_FLIGHT_ENABLED);
+            player.setData(ElytraToggleAttachments.ELYTRA_FLIGHT_ENABLED, newEnabled);
+
+            if (newEnabled) {
+                if (!player.isFallFlying()) {
+                    // Same check vanilla runs on double-jump (elytra equipped and usable,
+                    // airborne, not already flying, no levitation, etc). If conditions aren't
+                    // met right now, this just re-arms things for the next time they fall.
+                    player.tryToStartFallFlying();
+                }
+                player.displayClientMessage(Component.translatable("message.elytratoggle.on"), true);
+            } else {
+                if (player.isFallFlying()) {
+                    player.stopFallFlying();
+                }
+                player.displayClientMessage(Component.translatable("message.elytratoggle.off"), true);
             }
         });
     }

@@ -7,7 +7,8 @@ import net.neoforged.fml.common.Mod;
 import org.slf4j.Logger;
 
 /**
- * Elytra Toggle - adds a rebindable key that starts and stops elytra flight.
+ * Elytra Toggle - adds a rebindable key that starts and stops elytra flight, and locks
+ * flight out entirely (even the vanilla double-jump trigger) while toggled off.
  *
  * Minecraft 1.21.1 / NeoForge 21.1.x
  */
@@ -17,6 +18,6 @@ public class ElytraToggle {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public ElytraToggle(IEventBus modBus, ModContainer container) {
-        // Everything is registered through @EventBusSubscriber classes.
+        ElytraToggleAttachments.ATTACHMENT_TYPES.register(modBus);
     }
 }
