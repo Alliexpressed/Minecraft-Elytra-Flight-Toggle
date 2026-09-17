@@ -26,19 +26,15 @@ public final class ElytraToggleUtil {
 
     /**
      * Whether the elytra-off lock should act right now: only when the player actually has a
-     * usable elytra equipped, AND nothing from the Artifacts mod is also equipped.
+     * usable elytra equipped.
      *
-     * Minecraft's fall-flying flag doesn't record which item turned it on, and the Helium
-     * Innertube starts flight with the exact same double-jump gesture as an elytra - so once
-     * both are equipped there's no reliable way to tell them apart. Rather than risk cutting
-     * off the innertube, the lock simply steps aside entirely whenever anything from
-     * Artifacts is equipped, even if an elytra is present too.
+     * The Artifacts innertube exemption was previously needed here because we couldn't tell
+     * innertube flight from elytra flight after the fact. The elytra-slot patch now prevents
+     * Elytra Slot from starting elytra flight while toggled off, so the distinction is handled
+     * at the source and the exemption is no longer needed.
      */
     public static boolean shouldEnforceElytraLock(Player player) {
-        if (!isWearingUsableElytra(player)) {
-            return false;
-        }
-        return !(CURIOS_LOADED && CuriosElytraCompat.hasArtifactsItemEquipped(player));
+        return isWearingUsableElytra(player);
     }
 
     /**
