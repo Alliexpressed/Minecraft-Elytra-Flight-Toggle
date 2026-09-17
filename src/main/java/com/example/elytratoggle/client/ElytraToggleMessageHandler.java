@@ -14,18 +14,17 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
  * Receives the toggle-state packet from the server and shows the action bar message for a
- * fixed number of ticks. Refreshing a single local display avoids the flicker caused by
- * re-sending displayClientMessage every tick.
+ * fixed duration. The payload is registered here (mod bus); ticking happens in
+ * ElytraToggleMessageTicker (game bus) to keep the two event buses in separate classes.
  */
 @EventBusSubscriber(modid = ElytraToggle.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class ElytraToggleMessageHandler {
 
-    /** How many ticks to keep the message visible. 60 = 3 seconds. */
-    private static final int MESSAGE_DURATION_TICKS = 60;
+    /** How many ticks to keep the message visible (~3 seconds). */
+    static final int MESSAGE_DURATION_TICKS = 60;
 
-    /** Counts down each tick; message is shown while > 0. */
-    private static int messageTicksRemaining = 0;
-    private static Component pendingMessage = null;
+    static int messageTicksRemaining = 0;
+    static Component pendingMessage = null;
 
     private ElytraToggleMessageHandler() {
     }
@@ -47,30 +46,5 @@ public final class ElytraToggleMessageHandler {
                     : Component.translatable("message.elytratoggle.off");
             messageTicksRemaining = MESSAGE_DURATION_TICKS;
         });
-    }
-
-    // On the GAME bus to tick the countdown
-    @EventBusSubscriber(modid = ElytraToggle.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
-    public static final class Ticker {
-        private Ticker() {
-        }
-
-        @SubscribeEvent
-        public static void onClientTick(ClientTickEvent.Post event) {
-            if (messageTicksRemaining <= 0 || pendingMessage == null) {
-                return;
-            }
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.player == null) {
-                return;
-            }
-            // Only display on the first tick of the countdown to set it, then let the
-            // game's own action bar timer hold it visible for its natural 40-tick duration.
-            // We reset on each toggle by setting messageTicksRemaining again.
-            if (messageTicksRemaining == MESSAGE_DURATION_TICKS) {
-                mc.player.displayClientMessage(pendingMessage, true);
-            }
-            messageTicksRemaining--;
-        }
     }
 }
