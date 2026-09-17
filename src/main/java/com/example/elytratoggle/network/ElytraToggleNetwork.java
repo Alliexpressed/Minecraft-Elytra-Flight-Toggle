@@ -3,11 +3,11 @@ package com.example.elytratoggle.network;
 import com.example.elytratoggle.ElytraToggle;
 import com.example.elytratoggle.ElytraToggleAttachments;
 import com.example.elytratoggle.ElytraToggleUtil;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -20,14 +20,21 @@ public final class ElytraToggleNetwork {
 
     @SubscribeEvent
     public static void onRegisterPayloadHandlers(RegisterPayloadHandlersEvent event) {
-        // .optional() means a client with this mod can still join a server without it -
-        // it just falls back to client-only behavior (see ClientElytraToggleHandler).
         PayloadRegistrar registrar = event.registrar("1").optional();
 
+        // Client -> server: player pressed the toggle key.
         registrar.playToServer(
                 ToggleElytraFlightPayload.TYPE,
                 ToggleElytraFlightPayload.STREAM_CODEC,
                 ElytraToggleNetwork::handleToggleElytraFlight
+        );
+
+        // Server -> client: registered on the server side so it can send it;
+        // the actual handling is in ElytraToggleMessageHandler on the client.
+        registrar.playToClient(
+                ElytraToggleStatePayload.TYPE,
+                ElytraToggleStatePayload.STREAM_CODEC,
+                (payload, context) -> { /* handled client-side in ElytraToggleMessageHandler */ }
         );
     }
 
@@ -41,20 +48,15 @@ public final class ElytraToggleNetwork {
             boolean newEnabled = !player.getData(ElytraToggleAttachments.ELYTRA_FLIGHT_ENABLED);
             player.setData(ElytraToggleAttachments.ELYTRA_FLIGHT_ENABLED, newEnabled);
 
-            if (newEnabled) {
-                if (!player.isFallFlying()) {
-                    // Same check vanilla runs on double-jump (elytra equipped and usable,
-                    // airborne, not already flying, no levitation, etc). If conditions aren't
-                    // met right now, this just re-arms things for the next time they fall.
-                    player.tryToStartFallFlying();
-                }
-                player.displayClientMessage(Component.translatable("message.elytratoggle.on"), true);
-            } else {
+            if (!newEnabled) {
                 if (player.isFallFlying() && ElytraToggleUtil.shouldEnforceElytraLock(player)) {
                     player.stopFallFlying();
                 }
-                player.displayClientMessage(Component.translatable("message.elytratoggle.off"), true);
             }
+
+            // Send the new state back to the client so it can show a non-flickering
+            // action bar message without needing to resend it every tick.
+            PacketDistributor.sendToPlayer(player, new ElytraToggleStatePayload(newEnabled));
         });
     }
 }
