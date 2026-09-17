@@ -3,10 +3,13 @@ package com.example.elytratoggle.network;
 import com.example.elytratoggle.ElytraToggle;
 import com.example.elytratoggle.ElytraToggleAttachments;
 import com.example.elytratoggle.ElytraToggleUtil;
+import com.example.elytratoggle.client.ElytraToggleMessageHandler;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -29,12 +32,13 @@ public final class ElytraToggleNetwork {
                 ElytraToggleNetwork::handleToggleElytraFlight
         );
 
-        // Server -> client: registered on the server side so it can send it;
-        // the actual handling is in ElytraToggleMessageHandler on the client.
+        // Server -> client: registered once here (both sides) so NeoForge knows the
+        // payload is valid. The handler delegates to the client message handler, guarded
+        // by a dist check so the server never touches client-only classes.
         registrar.playToClient(
                 ElytraToggleStatePayload.TYPE,
                 ElytraToggleStatePayload.STREAM_CODEC,
-                (payload, context) -> { /* handled client-side in ElytraToggleMessageHandler */ }
+                ElytraToggleNetwork::handleToggleState
         );
     }
 
@@ -54,9 +58,17 @@ public final class ElytraToggleNetwork {
                 }
             }
 
-            // Send the new state back to the client so it can show a non-flickering
-            // action bar message without needing to resend it every tick.
+            // Send the new state to the client so it can display the action bar message.
             PacketDistributor.sendToPlayer(player, new ElytraToggleStatePayload(newEnabled));
         });
+    }
+
+    private static void handleToggleState(ElytraToggleStatePayload payload, IPayloadContext context) {
+        // This packet only ever travels server->client, so this handler only runs on the
+        // client. Guard with a dist check so the server never loads ElytraToggleMessageHandler
+        // (a client-only class).
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            context.enqueueWork(() -> ElytraToggleMessageHandler.receiveToggleState(payload.enabled()));
+        }
     }
 }
