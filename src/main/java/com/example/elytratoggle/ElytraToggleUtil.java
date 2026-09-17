@@ -25,16 +25,27 @@ public final class ElytraToggleUtil {
     }
 
     /**
-     * Whether the elytra-off lock should act right now: only when the player actually has a
-     * usable elytra equipped.
+     * Whether the elytra-off lock should cancel flight right now.
      *
-     * The Artifacts innertube exemption was previously needed here because we couldn't tell
-     * innertube flight from elytra flight after the fact. The elytra-slot patch now prevents
-     * Elytra Slot from starting elytra flight while toggled off, so the distinction is handled
-     * at the source and the exemption is no longer needed.
+     * We can't directly tell whether active gliding came from the elytra or from a Curios
+     * accessory like the Helium Innertube - both set the same isFallFlying flag. The
+     * elytra-slot patch prevents Elytra Slot from *starting* elytra flight while toggled off,
+     * but the tick handler also needs to cancel any that slips through. To avoid cancelling
+     * innertube flight, we step aside when anything from the Artifacts mod is equipped - the
+     * innertube can only be granting flight if it's present, so this is a reliable proxy.
      */
     public static boolean shouldEnforceElytraLock(Player player) {
-        return isWearingUsableElytra(player);
+        if (!isWearingUsableElytra(player)) {
+            return false;
+        }
+        // If an Artifacts item is equipped, the innertube may be what's actually granting
+        // flight rather than the elytra. The elytra-slot patch already blocks elytra flight
+        // from starting via Elytra Slot while toggled off, so we only need this fallback
+        // cancellation for cases where flight bypasses that patch entirely.
+        if (CURIOS_LOADED && CuriosElytraCompat.hasArtifactsItemEquipped(player)) {
+            return false;
+        }
+        return true;
     }
 
     /**

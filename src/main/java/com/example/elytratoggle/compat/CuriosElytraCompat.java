@@ -14,6 +14,8 @@ import top.theillusivec4.curios.api.CuriosApi;
  */
 public final class CuriosElytraCompat {
 
+    private static final String ARTIFACTS_MOD_ID = "artifacts";
+
     private CuriosElytraCompat() {
     }
 
@@ -28,7 +30,24 @@ public final class CuriosElytraCompat {
                 .orElse(false);
     }
 
+    /**
+     * True if anything from the Artifacts mod is equipped in a Curios slot. Used to detect
+     * whether the Helium Innertube (or similar) might be the source of active flight, so the
+     * toggle lock doesn't cancel it by mistake.
+     */
+    public static boolean hasArtifactsItemEquipped(Player player) {
+        return CuriosApi.getCuriosInventory(player)
+                .map(handler -> handler.isEquipped(CuriosElytraCompat::isFromArtifacts))
+                .orElse(false);
+    }
+
     private static boolean isUsableElytra(ItemStack stack) {
         return stack.getItem() instanceof ElytraItem && ElytraItem.isFlyEnabled(stack);
+    }
+
+    private static boolean isFromArtifacts(ItemStack stack) {
+        return ARTIFACTS_MOD_ID.equals(
+                net.minecraft.core.registries.BuiltInRegistries.ITEM
+                        .getKey(stack.getItem()).getNamespace());
     }
 }
